@@ -39,5 +39,6 @@ test {
     if (mockitoAgent != null) {
         jvmArgs "-javaagent:${mockitoAgent.absolutePath}"
     }
+    jvmArgs "-Xshare:off"
 }
 
