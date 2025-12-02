@@ -1,39 +1,47 @@
 package org.richrocksmy.juxtinterview;
 
 import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Named;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.Arguments;
-import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.api.Test;
 
-import java.util.stream.Stream;
+import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
-import static org.junit.jupiter.params.provider.Arguments.arguments;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import static org.richrocksmy.juxtinterview.Thing.Currency.EUR;
+import static org.richrocksmy.juxtinterview.Thing.Currency.GBP;
+import static org.richrocksmy.juxtinterview.Thing.Currency.USD;
 
 class ThingTest {
 
-    @DisplayName("Test that thing does the thing")
-    @MethodSource("getTestData")
-    @ParameterizedTest(name = "{0}")
-    void thingShouldDoTheThing(final String inputData, final int mockResult, final int result) {
+    @Test
+    @DisplayName("Test that trades are applied correctly")
+    void thingShouldDoTheThing() {
         // Given
-        SomeOtherThing someOtherThing = mock(SomeOtherThing.class);
-        when(someOtherThing.doSomeOtherThing(inputData)).thenReturn(mockResult);
-        Thing thing = new Thing(someOtherThing);
+        Thing thing = new Thing();
+        Map<Thing.Currency, Double> expectedBalances = Map.of(
+                USD, 1300.0D,
+                GBP, 230.0D,
+                EUR, -1500.0D
+        );
 
-        //  When / Then
-        assertThat(thing.doTheThing(inputData)).isEqualTo(result);
+        List<Thing.Trade> trades = List.of(
+                createTrade(1000, USD, -770, GBP),
+                createTrade(1000, GBP, -500, EUR),
+                createTrade(-1000, EUR, 300, USD)
+        );
+
+        //  When
+        Map<Thing.Currency, Double> balanceChanges = thing.applyTrades(trades);
+
+        // Then
+        assertThat(balanceChanges.get(USD)).isEqualTo(expectedBalances.get(USD));
     }
 
-    private static Stream<Arguments> getTestData() {
-        return Stream.of(
-                arguments(Named.of("Should return 3 when input is 1", "1"), 2, 3),
-                arguments(Named.of("Should return 4 when input is 2", "2"), 3, 4),
-                arguments(Named.of("Should return 5 when input is 3", "3"), 4, 5),
-                arguments(Named.of("Should return 6 when input is 4", "4"), 5, 6)
-        );
+    private Thing.Trade createTrade(final double leg1Value, Thing.Currency leg1Currency,
+                                    final double leg2Value, Thing.Currency leg2Currency) {
+        Thing.Leg leg1 = new Thing.Leg(leg1Value, leg1Currency);
+        Thing.Leg leg2 = new Thing.Leg(leg2Value, leg2Currency);
+
+        return new Thing.Trade(List.of(leg1, leg2));
     }
 }
